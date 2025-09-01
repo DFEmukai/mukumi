@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下半身のむくみ：原因と対策ガイド</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Beige & Aqua -->
+    <!-- Application Structure Plan: 利用者が情報を段階的に理解できるよう、タブ形式のナビゲーションを採用したシングルページアプリケーションを設計。1.「ホーム」でむくみの基本を視覚的に解説。2.「原因」ではインタラクティブなチャートで生活習慣と病気要因を比較し、詳細を表示。3.「セルフケア」では具体的な対策をカード形式で提示し、クリックで詳細を展開。4.「病気の可能性」ではアコーディオンUIで重篤な情報を段階的に開示し、利用者の不安を軽減しつつ注意を喚起。5.「専門家への相談」で受診の目安を提示。この構造により、利用者は自身の関心度に応じて情報を深掘りでき、直感的で使いやすい体験を提供できると判断。 -->
+    <!-- Visualization & Content Choices: 
+    - Report Info: むくみの原因（生活習慣 vs 病気）。 Goal: 原因の比率と内訳を直感的に示す。 Viz/Presentation Method: ドーナツチャート（Chart.js）。 Interaction: チャートの各セグメントをクリックすると、隣接するテキストエリアに詳細な説明が表示される。 Justification: 静的なリストよりもエンゲージメントを高め、原因の全体像と個々の詳細を効率的に伝えられる。 Library/Method: Chart.js (Canvas)。
+    - Report Info: 複数のセルフケア方法。 Goal: 各ケア方法を簡潔に紹介し、詳細情報へのアクセスを容易にする。 Viz/Presentation Method: アイコン付きのカードレイアウト（HTML/Tailwind）。 Interaction: カードをクリックすると、詳細な手順や注意点を記載したモーダルウィンドウまたは展開パネルが表示される。 Justification: 情報を整理し、視覚的に魅力的で探しやすいUIを提供。利用者は興味のある項目だけを選んで学べる。 Library/Method: HTML/CSS/JS。
+    - Report Info: むくみの背景に潜む病気。 Goal: 利用者を過度に不安にさせることなく、重要な医学的情報を正確に伝える。 Viz/Presentation Method: アコーディオンリスト（HTML/Tailwind）。 Interaction: 病名をクリックすると、症状や特徴に関する詳細が展開される。 Justification: 重要な情報を隠しすぎず、かつ一度に表示して圧倒することもない。段階的な情報開示により、利用者は自分のペースで学べる。 Library/Method: HTML/CSS/JS。
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #fdfaf6;
+            color: #3a3a3a;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active {
+            border-bottom-color: #008080;
+            color: #008080;
+            font-weight: 700;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: auto;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body class="bg-[#fdfaf6]">
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-[#3a3a3a] mb-2">下半身のむくみ</h1>
+            <p class="text-lg text-gray-600">その原因と対策を、正しく知ろう</p>
+        </header>
+
+        <nav class="sticky top-0 bg-[#fdfaf6]/80 backdrop-blur-sm z-10 mb-8 border-b">
+            <ul class="flex justify-center space-x-4 sm:space-x-8 text-sm sm:text-base">
+                <li><a href="#home" class="nav-link active py-4 px-2 block">ホーム</a></li>
+                <li><a href="#causes" class="nav-link py-4 px-2 block">原因</a></li>
+                <li><a href="#selfcare" class="nav-link py-4 px-2 block">セルフケア</a></li>
+                <li><a href="#diseases" class="nav-link py-4 px-2 block">病気の可能性</a></li>
+                <li><a href="#consult" class="nav-link py-4 px-2 block">専門家への相談</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="home" class="content-section active">
+                <div class="bg-white rounded-lg shadow-md p-6 sm:p-8 text-center">
+                    <h2 class="text-2xl font-bold text-[#008080] mb-4">「むくみ」とは？</h2>
+                    <p class="text-left mb-6 leading-relaxed">むくみ（浮腫）は、皮膚の下に余分な水分が溜まった状態です。特に下半身は、重力の影響で心臓から遠いため、血液やリンパ液の流れが滞りやすく、むくみやすい部位です。このアプリケーションでは、むくみのメカニズムから具体的な対策まで、あなたの疑問に答えます。まずは、むくみがどのようにして起こるのか、基本的な知識から見ていきましょう。</p>
+                    <div class="w-full bg-gray-100 rounded-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4">下半身の水分循環イメージ</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div class="text-left border-r-0 md:border-r pr-0 md:pr-6">
+                                <h4 class="font-bold text-green-600 mb-2">正常な状態</h4>
+                                <p class="text-sm mb-4">脚の筋肉がポンプの役割を果たし、血液やリンパ液をスムーズに心臓へ送り返します。これにより、余分な水分が溜まることなく、循環が保たれます。</p>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-3xl">🦵</span>
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-blue-500 text-2xl animate-pulse">↑</span>
+                                        <span class="text-xs">スムーズな流れ</span>
+                                        <span class="text-red-500 text-2xl">↓</span>
+                                    </div>
+                                    <span class="text-3xl">❤️</span>
+                                </div>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="font-bold text-orange-600 mb-2">むくんだ状態</h4>
+                                <p class="text-sm mb-4">長時間の同じ姿勢や運動不足で筋ポンプ作用が低下すると、重力に逆らえず水分が脚に溜まります。これがむくみの正体です。</p>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-3xl">🦵</span>
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-blue-500 text-2xl opacity-50">↑</span>
+                                        <span class="text-xs text-orange-600">滞留</span>
+                                        <span class="text-red-500 text-2xl">↓</span>
+                                    </div>
+                                    <span class="text-3xl text-gray-400">💧</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="causes" class="content-section">
+                 <div class="bg-white rounded-lg shadow-md p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-center text-[#008080] mb-4">むくみの主な原因</h2>
+                    <p class="text-center mb-8 leading-relaxed">むくみの原因は、日常の生活習慣に起因するものから、注意が必要な病気のサインであることまで様々です。下のグラフをクリックして、それぞれの原因について詳しく見てみましょう。自分の生活習慣と照らし合わせながら確認することが大切です。</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                        <div class="chart-container">
+                            <canvas id="causesChart"></canvas>
+                        </div>
+                        <div id="cause-description" class="bg-gray-50 rounded-lg p-6 min-h-[300px] flex flex-col justify-center">
+                            <h3 id="cause-title" class="text-xl font-bold text-gray-800 mb-2">グラフを選択してください</h3>
+                            <p id="cause-text" class="text-gray-600">グラフの各項目をクリックすると、ここに詳しい説明が表示されます。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="selfcare" class="content-section">
+                <div class="bg-white rounded-lg shadow-md p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-center text-[#008080] mb-4">今日からできるセルフケア</h2>
+                    <p class="text-center mb-8 leading-relaxed">むくみは日々の少しの工夫で改善が期待できます。ここでは、手軽に始められるセルフケアの方法をいくつかご紹介します。気になるカードをクリックして、具体的な方法をチェックしてみましょう。継続することが、すっきりとした毎日への第一歩です。</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="card bg-teal-50 rounded-lg p-6 text-center cursor-pointer" data-care="exercise">
+                            <div class="text-4xl mb-4">🤸</div>
+                            <h3 class="text-lg font-semibold text-teal-800">適度な運動</h3>
+                            <p class="text-sm text-teal-700">ふくらはぎを動かして血行促進</p>
+                        </div>
+                        <div class="card bg-amber-50 rounded-lg p-6 text-center cursor-pointer" data-care="diet">
+                             <div class="text-4xl mb-4">🍌</div>
+                            <h3 class="text-lg font-semibold text-amber-800">食生活の見直し</h3>
+                            <p class="text-sm text-amber-700">塩分を控え、カリウムを摂取</p>
+                        </div>
+                        <div class="card bg-sky-50 rounded-lg p-6 text-center cursor-pointer" data-care="massage">
+                             <div class="text-4xl mb-4">👐</div>
+                            <h3 class="text-lg font-semibold text-sky-800">マッサージ</h3>
+                            <p class="text-sm text-sky-700">リンパの流れを意識して優しく</p>
+                        </div>
+                        <div class="card bg-rose-50 rounded-lg p-6 text-center cursor-pointer" data-care="bathing">
+                             <div class="text-4xl mb-4">🛀</div>
+                            <h3 class="text-lg font-semibold text-rose-800">入浴</h3>
+                            <p class="text-sm text-rose-700">体を温めて血行を改善</p>
+                        </div>
+                        <div class="card bg-indigo-50 rounded-lg p-6 text-center cursor-pointer" data-care="elevation">
+                             <div class="text-4xl mb-4">🛌</div>
+                            <h3 class="text-lg font-semibold text-indigo-800">脚を高くする</h3>
+                            <p class="text-sm text-indigo-700">心臓より高く上げて休息</p>
+                        </div>
+                        <div class="card bg-lime-50 rounded-lg p-6 text-center cursor-pointer" data-care="compression">
+                             <div class="text-4xl mb-4">🧦</div>
+                            <h3 class="text-lg font-semibold text-lime-800">着圧ソックス</h3>
+                            <p class="text-sm text-lime-700">適度な圧でサポート</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="diseases" class="content-section">
+                <div class="bg-white rounded-lg shadow-md p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-center text-[#008080] mb-4">むくみの裏に隠れる病気の可能性</h2>
+                    <p class="text-center mb-6 leading-relaxed">ほとんどのむくみは一時的なものですが、中には病気が原因で起こるものもあります。以下の症状が当てはまる場合は、自己判断せず早めに医療機関を受診してください。各項目をタップすると、考えられる病気と主な症状が表示されます。</p>
+                    <div class="space-y-4">
+                        <div class="accordion-item border rounded-lg">
+                            <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center transition-colors duration-300 hover:bg-gray-50">
+                                <span>片足だけが急にむくんだ、痛みや赤みがある</span>
+                                <span class="accordion-icon transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content p-4 border-t bg-gray-50">
+                                <h4 class="font-bold text-red-600">深部静脈血栓症（エコノミークラス症候群）</h4>
+                                <p class="mt-2 text-sm">脚の深い部分にある静脈に血栓（血の塊）ができる病気。血栓が肺に飛ぶと命に関わることも。緊急性が高い状態です。</p>
+                            </div>
+                        </div>
+                         <div class="accordion-item border rounded-lg">
+                            <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center transition-colors duration-300 hover:bg-gray-50">
+                                <span>息切れや動悸、体重の急増や、横になると苦しい</span>
+                                <span class="accordion-icon transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content p-4 border-t bg-gray-50">
+                                <h4 class="font-bold text-red-600">心不全</h4>
+                                <p class="mt-2 text-sm">心臓のポンプ機能が低下し、全身に血液をうまく送り出せない状態。血液が滞り、足や肺に水が溜まります。</p>
+                            </div>
+                        </div>
+                        <div class="accordion-item border rounded-lg">
+                            <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center transition-colors duration-300 hover:bg-gray-50">
+                                <span>顔やまぶたのむくみ、尿の異常（泡立つ、量が減る）</span>
+                                <span class="accordion-icon transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content p-4 border-t bg-gray-50">
+                                <h4 class="font-bold text-red-600">腎臓病</h4>
+                                <p class="mt-2 text-sm">腎臓の機能が低下し、余分な水分や塩分を体外に排出できなくなることでむくみが生じます。ネフローゼ症候群などが考えられます。</p>
+                            </div>
+                        </div>
+                        <div class="accordion-item border rounded-lg">
+                            <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center transition-colors duration-300 hover:bg-gray-50">
+                                <span>脚の血管がボコボコと浮き出ている、脚が重だるい</span>
+                                <span class="accordion-icon transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content p-4 border-t bg-gray-50">
+                                <h4 class="font-bold text-red-600">下肢静脈瘤</h4>
+                                <p class="mt-2 text-sm">脚の静脈にある弁が壊れ、血液が逆流して溜まることで起こります。進行すると皮膚炎などを引き起こすこともあります。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="consult" class="content-section">
+                <div class="bg-white rounded-lg shadow-md p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold text-center text-[#008080] mb-6">専門家への相談と治療</h2>
+                    <p class="mb-6 leading-relaxed">セルフケアを試してもむくみが改善しない場合や、「病気の可能性」で挙げたような症状がある場合は、迷わず医療機関を受診しましょう。原因に応じた適切な治療を受けることが大切です。</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-6 rounded-lg">
+                            <h3 class="font-bold text-lg text-blue-800 mb-3">受診の目安</h3>
+                            <ul class="list-disc list-inside space-y-2 text-blue-900">
+                                <li>急に始まった、または悪化したむくみ</li>
+                                <li>片足だけの強いむくみ</li>
+                                <li>痛み、赤み、熱感を伴う</li>
+                                <li>息苦しさや胸の痛みを伴う</li>
+                                <li>むくんだ部分を指で押すと、跡がなかなか戻らない</li>
+                                <li>セルフケアで数日たっても改善しない</li>
+                            </ul>
+                        </div>
+                        <div class="bg-green-50 p-6 rounded-lg">
+                            <h3 class="font-bold text-lg text-green-800 mb-3">何科を受診すればいい？</h3>
+                            <ul class="list-none space-y-2 text-green-900">
+                                <li class="flex items-start"><span class="font-bold w-24">総合的に相談:</span> <span>まずは<strong class="text-green-900">内科</strong>や<strong class="text-green-900">総合診療科</strong>へ。</span></li>
+                                <li class="flex items-start"><span class="font-bold w-24">心臓の症状:</span> <span>息切れなどがあれば<strong class="text-green-900">循環器内科</strong>。</span></li>
+                                <li class="flex items-start"><span class="font-bold w-24">血管の異常:</span> <span>静脈瘤などがあれば<strong class="text-green-900">血管外科</strong>。</span></li>
+                                <li class="flex items-start"><span class="font-bold w-24">皮膚の問題:</span> <span>皮膚の変化もあれば<strong class="text-green-900">皮膚科</strong>も。</span></li>
+                            </ul>
+                            <p class="mt-4 text-sm text-green-700">かかりつけ医がいる場合は、まずそちらに相談するのが良いでしょう。</p>
+                        </div>
+                    </div>
+                     <div class="mt-8 text-center bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg" role="alert">
+                        <strong class="font-bold">重要: </strong>
+                        <span class="block sm:inline">この情報は医学的なアドバイスに代わるものではありません。健康に関する懸念がある場合は、必ず医師または資格のある医療提供者に相談してください。</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            const causesData = {
+                labels: ['長時間の同じ姿勢', '運動不足', '塩分の多い食事', '冷え・血行不良', 'ホルモンバランス', '病気の可能性'],
+                datasets: [{
+                    data: [30, 25, 15, 10, 10, 10],
+                    backgroundColor: ['#4DB6AC', '#81C784', '#FFB74D', '#64B5F6', '#BA68C8', '#E57373'],
+                    hoverBackgroundColor: ['#26A69A', '#66BB6A', '#FFA726', '#42A5F5', '#AB47BC', '#EF5350'],
+                    borderColor: '#fdfaf6',
+                    borderWidth: 4,
+                }]
+            };
+
+            const causesDescriptions = {
+                '長時間の同じ姿勢': {
+                    title: '長時間の同じ姿勢',
+                    text: 'デスクワークや立ち仕事などで長時間同じ姿勢でいると、ふくらはぎの筋ポンプ作用が働かず、重力で血液やリンパ液が脚に溜まりやすくなります。'
+                },
+                '運動不足': {
+                    title: '運動不足',
+                    text: '日常的に歩く機会が少ないと、脚の筋肉が衰え、血流を心臓に送り返す力が弱まります。ウォーキングなどの軽い運動が効果的です。'
+                },
+                '塩分の多い食事': {
+                    title: '塩分の多い食事',
+                    text: '塩分を摂りすぎると、体は塩分濃度を薄めようとして水分を溜め込みます。これがむくみの原因になります。加工食品や外食は塩分が多くなりがちなので注意が必要です。'
+                },
+                '冷え・血行不良': {
+                    title: '冷え・血行不良',
+                    text: '体が冷えると血管が収縮し、血行が悪くなります。特に足先は冷えやすく、血行不良がむくみにつながります。夏場のクーラーも原因の一つです。'
+                },
+                'ホルモンバランス': {
+                    title: 'ホルモンバランスの変化',
+                    text: '女性は月経前や妊娠中にホルモンバランスが変化し、体に水分を溜め込みやすくなるため、むくみが出やすくなります。'
+                },
+                '病気の可能性': {
+                    title: '病気の可能性',
+                    text: '心臓、腎臓、肝臓などの病気や、下肢静脈瘤、甲状腺機能の低下などが原因でむくみが生じることがあります。急なむくみや他の症状がある場合は注意が必要です。'
+                }
+            };
+            
+            const careDescriptions = {
+                exercise: {
+                    title: '適度な運動',
+                    content: 'ふくらはぎは「第二の心臓」。かかとの上げ下ろし運動や、足首を回すだけでも効果的です。1時間に1回は立ち上がって少し歩くように心がけましょう。'
+                },
+                diet: {
+                    title: '食生活の見直し',
+                    content: '塩分は水分を溜め込む性質があります。ラーメンの汁を飲まない、漬物を控えるなど減塩を意識しましょう。逆に、余分な塩分を排出するカリウム（バナナ、アボカド、ほうれん草など）を積極的に摂るのがおすすめです。'
+                },
+                massage: {
+                    title: 'マッサージ',
+                    content: '足首から膝に向かって、優しくなでるようにマッサージします。リンパの流れを助けるイメージで。オイルやクリームを使うと肌への負担が減ります。強く揉みすぎないように注意してください。'
+                },
+                bathing: {
+                    title: '入浴',
+                    content: '38〜40℃くらいのぬるめのお湯にゆっくり浸かることで、全身の血行が良くなります。シャワーだけでなく、湯船に浸かる習慣をつけましょう。入浴中に足首を動かすのも効果的です。'
+                },
+                elevation: {
+                    title: '脚を高くする',
+                    content: '休憩時や就寝時に、クッションや座布団を使って脚を心臓より高い位置に上げます。溜まった血液やリンパ液が心臓に戻りやすくなり、むくみ解消に繋がります。'
+                },
+                compression: {
+                    title: '着圧ソックスの活用',
+                    content: '日中や就寝時に着圧（弾性）ソックスを履くと、外部から適度な圧力がかかり、筋ポンプ作用をサポートしてくれます。ただし、自分に合ったサイズや圧力のものを選び、締め付けすぎないようにしましょう。'
+                }
+            };
+
+
+            function switchTab(hash) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.hash === hash);
+                });
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', `#${section.id}` === hash);
+                });
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    history.pushState(null, null, e.target.hash);
+                    switchTab(e.target.hash);
+                });
+            });
+
+            if (window.location.hash) {
+                switchTab(window.location.hash);
+            } else {
+                switchTab('#home');
+            }
+            
+            window.addEventListener('popstate', () => {
+                switchTab(window.location.hash || '#home');
+            });
+
+            const ctx = document.getElementById('causesChart');
+            if (ctx) {
+                const causesChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: causesData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    boxWidth: 12,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const label = causesData.labels[index];
+                                const descriptionData = causesDescriptions[label];
+                                document.getElementById('cause-title').textContent = descriptionData.title;
+                                document.getElementById('cause-text').textContent = descriptionData.text;
+                            }
+                        }
+                    }
+                });
+            }
+            
+            const careCards = document.querySelectorAll('.card');
+            careCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const careType = card.dataset.care;
+                    const data = careDescriptions[careType];
+                    
+                    const existingModal = document.getElementById('care-modal');
+                    if(existingModal) existingModal.remove();
+
+                    const modal = document.createElement('div');
+                    modal.id = 'care-modal';
+                    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+                    modal.innerHTML = `
+                        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative animate-fadeIn">
+                            <button id="close-modal" class="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800">&times;</button>
+                            <h3 class="text-2xl font-bold text-[#008080] mb-4">${data.title}</h3>
+                            <p class="text-gray-700 leading-relaxed">${data.content}</p>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    
+                    document.getElementById('close-modal').addEventListener('click', () => modal.remove());
+                    modal.addEventListener('click', (e) => {
+                         if (e.target.id === 'care-modal') modal.remove();
+                    });
+                });
+            });
+            
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = item.querySelector('.accordion-icon');
+
+                header.addEventListener('click', () => {
+                    const isExpanded = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+                    accordionItems.forEach(otherItem => {
+                        otherItem.querySelector('.accordion-content').style.maxHeight = '0px';
+                        otherItem.querySelector('.accordion-icon').style.transform = 'rotate(0deg)';
+                    });
+
+                    if (!isExpanded) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
